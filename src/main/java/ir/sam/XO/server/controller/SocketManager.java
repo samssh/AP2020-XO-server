@@ -38,7 +38,7 @@ public class SocketManager {
             try {
                 Socket socket = serverSocket.accept();
                 ResponseSender responseSender = new SocketResponseSender(socket);
-
+                RequestVisitor visitor = new RequestExecutor(responseSender,connector,modelLoader,gameLobby);
             } catch (IOException e) {
                 e.printStackTrace();
             }

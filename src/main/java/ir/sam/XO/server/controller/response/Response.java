@@ -9,11 +9,9 @@ public abstract class Response {
         return WrongAPI.instance;
     }
 
-
     public static VoidResponse getVoidResponse() {
         return VoidResponse.instance;
     }
-
 
     private static class WrongAPI extends Response {
         private final static WrongAPI instance = new WrongAPI();

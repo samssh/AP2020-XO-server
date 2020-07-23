@@ -105,7 +105,7 @@ public class Connector {
     }
 
     public <E extends SaveAble> E fetch(Class<E> entity, Serializable id) {
-        synchronized (Connector.class) {
+        synchronized (staticLock) {
             Session session = sessionFactory.openSession();
             E result = session.get(entity, id);
             session.close();
@@ -127,20 +127,6 @@ public class Connector {
             return result;
         }
     }
-//
-//    public <E extends SaveAble> CriteriaQuery<E> createCriteriaQuery(Class<E> entity) {
-//        synchronized (staticLock) {
-//            Session session = sessionFactory.openSession();
-//            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-//            CriteriaQuery<E> result = criteriaBuilder.createQuery(entity);
-//            Root<E> eRoot = result.from(entity);
-//            result.select(eRoot);
-//            result.orderBy(criteriaBuilder.asc(eRoot.get("")));
-//            session.createQuery(result).setFetchSize(10).list();
-//            session.close();
-//            return result;
-//        }
-//    }
 
     public <E extends SaveAble> List<E> fetchWithRestriction(Class<E> entity, String fieldName, Object value) {
         synchronized (staticLock) {

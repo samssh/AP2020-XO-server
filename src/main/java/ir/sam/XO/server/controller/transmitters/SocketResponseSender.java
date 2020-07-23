@@ -42,7 +42,7 @@ public class SocketResponseSender implements ResponseSender {
             Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
             Map<?, ?> map = gson.fromJson(json, Map.class);
             if (token != null) {
-                if (!token.equals(map.get("token"))) sendResponse(Response.getWrongApi()); // api
+                if (!token.equals(map.get("token"))) throw new ClassCastException();
             }
             Class<? extends Request> requestClass = Request.requestType.get(map.get("type"));
             Constructor<? extends Request> constructor = requestClass.getConstructor(Map.class);
@@ -58,7 +58,7 @@ public class SocketResponseSender implements ResponseSender {
     @Override
     public void sendResponse(Response response) {
         Map<String, Object> map = new HashMap<>();
-        map.put("type",response.getClass().getSimpleName());
+        map.put("type", response.getClass().getSimpleName());
         if (response instanceof Login && ((Login) response).isSuccess()) {
             token = generateNewToken();
             map.put("token", token);
