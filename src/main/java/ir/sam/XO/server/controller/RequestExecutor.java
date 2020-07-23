@@ -113,6 +113,8 @@ public class RequestExecutor implements RequestVisitor {
                     return new PlayDetails(game.getPiece(side), message, game.getOpponentUsername(side)
                             , game.getCloned());
                 case ENDED:
+                    player.setState(PlayerState.HANGING_ON_MENU);
+                    connector.save(player);
                     Game game = this.game;
                     this.game = null;
                     return new GoTo((side == game.getSideToTurn() ? "win" : "lose"), "MAIN_MENU");

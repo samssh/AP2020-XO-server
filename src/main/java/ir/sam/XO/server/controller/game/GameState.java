@@ -47,7 +47,7 @@ public class GameState {
         updateCloned();
     }
 
-    Piece getPiece(int i, int j, Side side) {
+    Piece getPiece(int i, int j) {
         if (-1 < i && i < pieces.length && -1 < j && j < pieces[0].length)
             return pieces[i][j];
         return Piece.EMPTY;
