@@ -16,7 +16,7 @@ public class GameState {
     @Getter
     private volatile Piece[][] cloned;
 
-    GameState(int width, int height, Side side) {
+    GameState(int width, int height, Side side, Piece pieceP1, Piece pieceP2) {
         pieces = new Piece[width][height];
         usernames = new String[2];
         playerPiece = new Piece[2];
@@ -26,6 +26,8 @@ public class GameState {
             }
         }
         sideToTurn = side;
+        playerPiece[0] = pieceP1;
+        playerPiece[1] = pieceP2;
     }
 
     void setUsername(Side side, String username) {
@@ -40,12 +42,12 @@ public class GameState {
         return playerPiece[side.getIndex()];
     }
 
-    public synchronized void putPiece(int i, int j, Side side) {
+    synchronized void putPiece(int i, int j, Side side) {
         pieces[i][j] = playerPiece[side.getIndex()];
         updateCloned();
     }
 
-    public Piece getPiece(int i, int j, Side side) {
+    Piece getPiece(int i, int j, Side side) {
         if (-1 < i && i < pieces.length && -1 < j && j < pieces[0].length)
             return pieces[i][j];
         return Piece.EMPTY;

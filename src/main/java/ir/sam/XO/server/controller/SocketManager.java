@@ -29,7 +29,7 @@ public class SocketManager {
         serverSocket.bind(socketAddress);
         connector = new Connector();
         modelLoader = new ModelLoader(connector);
-        gameLobby = new GameLobby(config);
+        gameLobby = new GameLobby(config, connector);
         accept();
     }
 

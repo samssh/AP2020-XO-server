@@ -4,9 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import ir.sam.XO.server.controller.request.Request;
-import ir.sam.XO.server.controller.response.LoginResponse;
+import ir.sam.XO.server.controller.response.Login;
 import ir.sam.XO.server.controller.response.Response;
-import ir.sam.XO.server.controller.response.WrongAPI;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -34,7 +33,6 @@ public class SocketResponseSender implements ResponseSender {
         do {
             String json = scanner.nextLine();
             optionalRequest = toRequest(json);
-
         } while (optionalRequest.isEmpty());
         return optionalRequest.get();
     }
@@ -44,15 +42,15 @@ public class SocketResponseSender implements ResponseSender {
             Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
             Map<?, ?> map = gson.fromJson(json, Map.class);
             if (token != null) {
-                if (!token.equals(map.get("token"))) sendResponse(WrongAPI.getInstance()); // api
+                if (!token.equals(map.get("token"))) sendResponse(Response.getWrongApi()); // api
             }
             Class<? extends Request> requestClass = Request.requestType.get(map.get("type"));
             Constructor<? extends Request> constructor = requestClass.getConstructor(Map.class);
             return Optional.of(constructor.newInstance((Map<?, ?>) map.get("request")));
-        } catch (JsonSyntaxException | ClassCastException e) {
-            sendResponse(WrongAPI.getInstance()); // api
-        } catch (NoSuchMethodException | IllegalAccessException |
-                InstantiationException | InvocationTargetException ignore) {
+        } catch (JsonSyntaxException | ClassCastException | InvocationTargetException e) {
+            sendResponse(Response.getWrongApi()); // api
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException e) {
+            e.printStackTrace();
         }
         return Optional.empty();
     }
@@ -61,11 +59,11 @@ public class SocketResponseSender implements ResponseSender {
     public void sendResponse(Response response) {
         Map<String, Object> map = new HashMap<>();
         map.put("type",response.getClass().getSimpleName());
-        if (response instanceof LoginResponse && ((LoginResponse) response).isSuccess()) {
+        if (response instanceof Login && ((Login) response).isSuccess()) {
             token = generateNewToken();
             map.put("token", token);
         }
-        map.put("response", response.toMap());
+        map.put("Body", response.toMap());
         Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
         String json = gson.toJson(map);
         printStream.println(json);

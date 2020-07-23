@@ -1,15 +1,15 @@
 package ir.sam.XO.server.controller;
 
+import ir.sam.XO.server.controller.game.Game;
+import ir.sam.XO.server.controller.game.GameLobby;
 import ir.sam.XO.server.controller.game.Side;
 import ir.sam.XO.server.controller.request.Request;
-import ir.sam.XO.server.controller.response.LoginResponse;
-import ir.sam.XO.server.controller.response.Response;
-import ir.sam.XO.server.controller.response.ScoreBoard;
-import ir.sam.XO.server.controller.response.WrongAPI;
+import ir.sam.XO.server.controller.response.*;
 import ir.sam.XO.server.controller.transmitters.ResponseSender;
 import ir.sam.XO.server.database.Connector;
 import ir.sam.XO.server.database.ModelLoader;
 import ir.sam.XO.server.model.Player;
+import ir.sam.XO.server.model.PlayerState;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,6 +21,8 @@ public class RequestExecutor implements RequestVisitor {
     private final ResponseSender responseSender;
     private final Connector connector;
     private final ModelLoader modelLoader;
+    private final GameLobby gameLobby;
+    private Game game;
     private volatile boolean running;
     @Getter
     private Player player;
@@ -28,10 +30,11 @@ public class RequestExecutor implements RequestVisitor {
     private Side side;
 
 
-    public RequestExecutor(ResponseSender responseSender, Connector connector, ModelLoader modelLoader) {
+    public RequestExecutor(ResponseSender responseSender, Connector connector, ModelLoader modelLoader, GameLobby gameLobby) {
         this.responseSender = responseSender;
         this.connector = connector;
         this.modelLoader = modelLoader;
+        this.gameLobby = gameLobby;
         new Thread(this::execute).start();
     }
 
@@ -49,7 +52,7 @@ public class RequestExecutor implements RequestVisitor {
             return signIn(username, password);
         if (mode == 2)
             return signUp(username, password);
-        return WrongAPI.getInstance();
+        return Response.getWrongApi();
     }
 
     private Response signIn(String userName, String password) {
@@ -57,12 +60,12 @@ public class RequestExecutor implements RequestVisitor {
         if (fetched != null) {
             if (fetched.getPassword().equals(password)) {
                 this.player = fetched;
-                return new LoginResponse(true, player.getUsername());
+                return new Login(true, player.getUsername());
             } else {
-                return new LoginResponse(false, "wrong password");
+                return new Login(false, "wrong password");
             }
         } else {
-            return new LoginResponse(false, "username not exist");
+            return new Login(false, "username not exist");
         }
     }
 
@@ -72,9 +75,9 @@ public class RequestExecutor implements RequestVisitor {
             player = new Player(username, password);
             connector.save(player);
             this.player = player;
-            return new LoginResponse(true, this.player.getUsername());
+            return new Login(true, this.player.getUsername());
         } else {
-            return new LoginResponse(false, "username already exist");
+            return new Login(false, "username already exist");
         }
     }
 
@@ -95,8 +98,40 @@ public class RequestExecutor implements RequestVisitor {
 
     @Override
     public Response startGame() {
-        return null;
+        game = gameLobby.startGameRequest(this);
+        return Response.getVoidResponse();// or send gameState i dont know
     }
 
+    @Override
+    public Response sendGameState() {
+        if (game !=null) {
+            switch (game.getStatus()) {
+                case NOT_STARTED:
+                    return new PlayDetails("waiting for opponent");
+                case PLAYING:
+                    String message = (side == game.getSideToTurn() ? "your" : "opponent") + " turn";
+                    return new PlayDetails(game.getPiece(side), message, game.getOpponentUsername(side)
+                            , game.getCloned());
+                case ENDED:
+                    Game game = this.game;
+                    this.game = null;
+                    return new GoTo((side == game.getSideToTurn() ? "win" : "lose"), "MAIN_MENU");
+            }
+        }
+        return Response.getWrongApi();
+    }
 
+    @Override
+    public Response putPiece(int x, int y) {
+        game.putPiece(x,y,side);
+        return Response.getVoidResponse(); // or send gameState i dont know
+    }
+
+    @Override
+    public Response logout() {
+        running = false;
+        player.setState(PlayerState.OFFLINE);
+        connector.save(player);
+        return Response.getVoidResponse();
+    }
 }

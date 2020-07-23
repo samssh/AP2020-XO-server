@@ -6,13 +6,13 @@ import ir.sam.XO.server.controller.transmitters.WrongApiException;
 
 import java.util.Map;
 
-public class StartGame extends Request {
-    public StartGame(Map<String, Object> map) throws WrongApiException {
+public class PlayDetailsRequest extends Request{
+    public PlayDetailsRequest(Map<String, Object> map) throws WrongApiException {
         super(map);
     }
 
     @Override
     public Response execute(RequestVisitor requestVisitor) {
-        return requestVisitor.startGame();
+        return requestVisitor.sendGameState();
     }
 }

@@ -8,4 +8,10 @@ public interface RequestVisitor {
     Response sendScoreBoard();
 
     Response startGame();
+
+    Response sendGameState();
+
+    Response putPiece(int x,int y);
+
+    Response logout();
 }
