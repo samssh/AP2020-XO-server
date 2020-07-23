@@ -1,0 +1,12 @@
+<hibernate-configuration>
+    <session-factory>
+        <!--SQLite-->
+        <property name="dialect">org.hibernate.dialect.SQLiteDialect</property>
+        <property name="connection.driver_class">org.sqlite.JDBC</property>
+        <property name="connection.url">jdbc:sqlite:./src/main/resources/database/server.db</property>
+        <!--        <property name="hbm2ddl.auto">create</property>-->
+        <property name="hbm2ddl.auto">update</property>
+
+        <mapping class="ir.sam.XO.server.model.Player"/>
+    </session-factory>
+</hibernate-configuration>
