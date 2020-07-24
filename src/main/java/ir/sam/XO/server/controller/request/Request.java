@@ -13,10 +13,9 @@ public abstract class Request {
                     , "StartGame", StartGame.class
                     , "PlayDetails", PlayDetailsRequest.class
                     , "PutPiece", PutPiece.class
-                    ,"Logout",LogoutRequest.class);
+                    , "Logout", LogoutRequest.class);
 
-    @SuppressWarnings("RedundantThrows")
-    public Request(Map<String, Object> map) throws WrongApiException {
+    public Request() {
     }
 
     public abstract Response execute(RequestVisitor requestVisitor);

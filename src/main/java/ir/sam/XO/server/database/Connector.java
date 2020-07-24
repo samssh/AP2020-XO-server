@@ -12,8 +12,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -88,19 +86,13 @@ public class Connector {
 
     public void close() {
         worker.stop();
+        sessionFactory.close();
     }
 
     public void save(SaveAble saveAble) {
         if (saveAble != null)
             synchronized (lock) {
                 save.add(saveAble);
-            }
-    }
-
-    public void delete(SaveAble saveAble) {
-        if (saveAble != null)
-            synchronized (lock) {
-                delete.add(saveAble);
             }
     }
 
@@ -122,16 +114,6 @@ public class Connector {
     public <E extends SaveAble> List<E> executeHQL(String hql, Class<E> entity) {
         synchronized (staticLock) {
             Session session = sessionFactory.openSession();
-            List<E> result = session.createQuery(hql, entity).setMaxResults(2).getResultList();
-            session.close();
-            return result;
-        }
-    }
-
-    public <E extends SaveAble> List<E> fetchWithRestriction(Class<E> entity, String fieldName, Object value) {
-        synchronized (staticLock) {
-            Session session = sessionFactory.openSession();
-            String hql = "from" + entity.getName() + " where " + fieldName + "=" + '\'' + value + "'";
             List<E> result = session.createQuery(hql, entity).getResultList();
             session.close();
             return result;

@@ -1,11 +1,14 @@
 package ir.sam.XO.server.controller.game;
 
+import ir.sam.XO.server.database.Connector;
+import ir.sam.XO.server.model.Player;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.Synchronized;
 
 import java.util.EnumMap;
+import java.util.LinkedList;
 import java.util.Map;
 
 public class Game {
@@ -17,8 +20,11 @@ public class Game {
     @Getter(onMethod_ = @Synchronized)
     @Setter(value = AccessLevel.PACKAGE)
     private volatile GameStatus status;
+    private final LinkedList<Event> events;
+    private final Player[] players;
+    private final Connector connector;
 
-    public Game(int width, int height, int winningRace) {
+    public Game(int width, int height, int winningRace, Connector connector) {
         this.width = width;
         this.height = height;
         this.winningRace = winningRace;
@@ -33,10 +39,13 @@ public class Game {
             pieceP2 = Piece.O;
         }
         gameState = new GameState(width, height, side, pieceP1, pieceP2);
+        events = new LinkedList<>();
+        players = new Player[2];
+        this.connector = connector;
     }
 
-    void setName(Side side, String username) {
-        gameState.setUsername(side, username);
+    void setName(Side side, Player player) {
+        players[side.getIndex()] = player;
     }
 
 
@@ -46,8 +55,12 @@ public class Game {
         if (-1 >= i || i >= width || -1 >= j || j >= height) {
             return;
         }
+        if (gameState.getPiece(i,j)!=Piece.EMPTY)
+            return;
         gameState.putPiece(i, j, side);
+        events.add(new Event(events.size() + 1, i, j, gameState.getPlayerPiece()[side.getIndex()]));
         check(i, j);
+        checkDraw();
         if (status == GameStatus.PLAYING)
             gameState.setSideToTurn(gameState.getSideToTurn().getOther());
     }
@@ -61,12 +74,38 @@ public class Game {
                     map.put(gameState.getPiece(i + n * dx, j + n * dy), value);
                 }
                 if (map.size() == 1) {
+                    players[gameState.getSideToTurn().getIndex()].win();
+                    connector.save(players[gameState.getSideToTurn().getIndex()]);
+                    players[gameState.getSideToTurn().getOther().getIndex()].lose();
+                    connector.save(players[gameState.getSideToTurn().getOther().getIndex()]);
                     status = GameStatus.ENDED;
                 }
             }
         }
     }
 
+    private void checkDraw(){
+        Map<Piece,Object> map = new EnumMap<>(Piece.class);
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                map.put(gameState.getPiece(i,j),value);
+            }
+        }
+        if (!map.containsKey(Piece.EMPTY)){
+            players[gameState.getSideToTurn().getIndex()].draw();
+            connector.save(players[gameState.getSideToTurn().getIndex()]);
+            players[gameState.getSideToTurn().getOther().getIndex()].draw();
+            connector.save(players[gameState.getSideToTurn().getOther().getIndex()]);
+            status = GameStatus.DRAW;
+        }
+    }
+
+    public synchronized Event getEvent(int eventNumber){
+        if (eventNumber>events.size()){
+            return null;
+        }
+        return events.get(eventNumber-1);
+    }
 
     public synchronized Side getSideToTurn() {
         return gameState.getSideToTurn();
@@ -77,12 +116,6 @@ public class Game {
     }
 
     public String getOpponentUsername(Side side) {
-        return gameState.getUsername(side);
+        return players[side.getOther().getIndex()].getUsername();
     }
-
-    public Piece[][] getCloned() {
-        return gameState.getCloned();
-    }
-
-
 }

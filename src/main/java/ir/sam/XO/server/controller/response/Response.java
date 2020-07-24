@@ -5,12 +5,17 @@ import java.util.Map;
 public abstract class Response {
     public abstract Map<String, Object> toMap();
 
+    protected String nonNull(String string) {
+        if (string == null) string = "";
+        return string;
+    }
+
     public static WrongAPI getWrongApi() {
         return WrongAPI.instance;
     }
 
-    public static VoidResponse getVoidResponse() {
-        return VoidResponse.instance;
+    public static Void getVoidResponse() {
+        return Void.instance;
     }
 
     private static class WrongAPI extends Response {
@@ -27,10 +32,10 @@ public abstract class Response {
         }
     }
 
-    private static class VoidResponse extends Response {
-        private static final VoidResponse instance = new VoidResponse();
+    private static class Void extends Response {
+        private static final Void instance = new Void();
 
-        private VoidResponse() {
+        private Void() {
         }
 
         @Override

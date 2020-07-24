@@ -10,7 +10,6 @@ public class PutPiece extends Request {
     private final int x, y;
 
     public PutPiece(Map<String, Object> map) throws WrongApiException {
-        super(map);
         try {
             y = (int) map.get("y");
             x = (int) map.get("x");

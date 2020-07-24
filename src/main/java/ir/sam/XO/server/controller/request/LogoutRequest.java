@@ -7,8 +7,8 @@ import ir.sam.XO.server.controller.transmitters.WrongApiException;
 import java.util.Map;
 
 public class LogoutRequest extends Request{
-    public LogoutRequest(Map<String, Object> map) throws WrongApiException {
-        super(map);
+    public LogoutRequest(Map<String, Object> map){
+
     }
 
     @Override

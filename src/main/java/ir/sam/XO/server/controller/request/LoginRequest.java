@@ -14,11 +14,10 @@ public class LoginRequest extends Request {
     private final int mode;
 
     public LoginRequest(Map<String, Object> map) throws WrongApiException {
-        super(map);
         try {
             this.userName = (String) map.get("userName");
             this.password = (String) map.get("password");
-            this.mode = (int) map.get("mode");
+            this.mode = (int) (map.get("mode"));
         } catch (ClassCastException exception) {
             throw new WrongApiException(exception);
         }

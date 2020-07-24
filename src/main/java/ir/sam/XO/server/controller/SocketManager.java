@@ -8,13 +8,12 @@ import ir.sam.XO.server.database.ModelLoader;
 import ir.sam.XO.server.util.Config;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.Scanner;
 
 public class SocketManager {
-    private int port = 8000;
-    private String address="";
     private final ServerSocket serverSocket;
     private final Connector connector;
     private final ModelLoader modelLoader;
@@ -22,30 +21,40 @@ public class SocketManager {
     private volatile boolean running;
 
     public SocketManager(Config config) throws IOException {
-        config.getProperty(Integer.class,"port").ifPresent(integer -> port = integer);
-        config.getProperty(String.class,"address").ifPresent(s -> address = s);
-        InetSocketAddress socketAddress = new InetSocketAddress(address,port);
+        int port = config.getProperty(Integer.class, "port").orElse(8000);
         serverSocket = new ServerSocket(port);
-        serverSocket.bind(socketAddress);
         connector = new Connector();
         modelLoader = new ModelLoader(connector);
         gameLobby = new GameLobby(config, connector);
+        running = true;
+        new Thread(this::getOrders).start();
         accept();
     }
 
-    private void accept(){
-        while (running){
+    private void accept() {
+        while (running) {
             try {
                 Socket socket = serverSocket.accept();
                 ResponseSender responseSender = new SocketResponseSender(socket);
-                RequestVisitor visitor = new RequestExecutor(responseSender,connector,modelLoader,gameLobby);
-            } catch (IOException e) {
-                e.printStackTrace();
+                new RequestExecutor(responseSender, connector, modelLoader, gameLobby);
+            } catch (IOException ignore) {
             }
         }
     }
 
-    private void getOrders(){
-
+    private void getOrders() {
+        Scanner scanner = new Scanner(System.in);
+        while (running) {
+            System.out.println("type exit to shutdown server. make sure no client connected");
+            if ("exit".equals(scanner.nextLine())) {
+                running = false;
+                connector.close();
+                modelLoader.stop();
+                try {
+                    serverSocket.close();
+                } catch (IOException ignore) {
+                }
+            }
+        }
     }
 }

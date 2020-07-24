@@ -1,8 +1,6 @@
 package ir.sam.XO.server.controller;
 
-import ir.sam.XO.server.controller.game.Game;
-import ir.sam.XO.server.controller.game.GameLobby;
-import ir.sam.XO.server.controller.game.Side;
+import ir.sam.XO.server.controller.game.*;
 import ir.sam.XO.server.controller.request.Request;
 import ir.sam.XO.server.controller.response.*;
 import ir.sam.XO.server.controller.transmitters.ResponseSender;
@@ -35,6 +33,7 @@ public class RequestExecutor implements RequestVisitor {
         this.connector = connector;
         this.modelLoader = modelLoader;
         this.gameLobby = gameLobby;
+        running = true;
         new Thread(this::execute).start();
     }
 
@@ -60,6 +59,8 @@ public class RequestExecutor implements RequestVisitor {
         if (fetched != null) {
             if (fetched.getPassword().equals(password)) {
                 this.player = fetched;
+                player.setState(PlayerState.HANGING_ON_MENU);
+                connector.save(player);
                 return new Login(true, player.getUsername());
             } else {
                 return new Login(false, "wrong password");
@@ -92,41 +93,59 @@ public class RequestExecutor implements RequestVisitor {
         Map<String, Object> result = new HashMap<>();
         result.put("username", player.getUsername());
         result.put("score", player.getScore());
-        result.put("state", player.getState());
+        result.put("state", player.getState().name());
         return result;
     }
 
     @Override
     public Response startGame() {
         game = gameLobby.startGameRequest(this);
-        return Response.getVoidResponse();// or send gameState i dont know
+        return new GoTo(null, "PLAY");
     }
 
     @Override
-    public Response sendGameState() {
-        if (game !=null) {
-            switch (game.getStatus()) {
-                case NOT_STARTED:
-                    return new PlayDetails("waiting for opponent");
-                case PLAYING:
+    public Response sendGameState(int eventNumber) {
+        if (game != null) {
+            GameStatus status = game.getStatus();
+            if (status == GameStatus.NOT_STARTED) {
+                return new PlayDetails("waiting for opponent");
+            } else {
+                if (eventNumber == 0) {
                     String message = (side == game.getSideToTurn() ? "your" : "opponent") + " turn";
-                    return new PlayDetails(game.getPiece(side), message, game.getOpponentUsername(side)
-                            , game.getCloned());
-                case ENDED:
-                    player.setState(PlayerState.HANGING_ON_MENU);
-                    connector.save(player);
-                    Game game = this.game;
-                    this.game = null;
-                    return new GoTo((side == game.getSideToTurn() ? "win" : "lose"), "MAIN_MENU");
+                    return new PlayDetails(eventNumber, message, game.getPiece(side)
+                            , game.getOpponentUsername(side));
+                } else if (eventNumber > 0) {
+                    Event event = game.getEvent(eventNumber);
+                    if (event == null) {
+                        if (status!=GameStatus.PLAYING) {
+                                player.setState(PlayerState.HANGING_ON_MENU);
+                                connector.save(player);
+                                Game game = this.game;
+                                this.game = null;
+                            if (status == GameStatus.ENDED) {
+                                return new GoTo((side == game.getSideToTurn() ? "win" : "lose"), "MAIN_MENU");
+                            }else {
+                                return new GoTo("draw", "MAIN_MENU");
+                            }
+                        } else {
+                            return Response.getVoidResponse();
+                        }
+                    }
+                    String message = (side == game.getSideToTurn() ? "your" : "opponent") + " turn";
+                    return new PlayDetails(event.getEventNumber(), event.getX(), event.getY()
+                            , event.getPiece(), message);
+                } else {
+                    return Response.getWrongApi();
+                }
             }
         }
-        return Response.getWrongApi();
+        return Response.getVoidResponse();
     }
 
     @Override
     public Response putPiece(int x, int y) {
-        game.putPiece(x,y,side);
-        return Response.getVoidResponse(); // or send gameState i dont know
+        game.putPiece(x, y, side);
+        return Response.getVoidResponse();
     }
 
     @Override

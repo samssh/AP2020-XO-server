@@ -22,21 +22,22 @@ public class GameLobby {
 
     public synchronized Game startGameRequest(RequestExecutor requestExecutor) {
         if (gameNotStarted == null) {
-            gameNotStarted = new Game(width,height,winningRace);
+            gameNotStarted = new Game(width,height,winningRace,connector);
             waiting = requestExecutor;
             requestExecutor.setSide(Side.PLAYER_ONE);
             requestExecutor.getPlayer().setState(PlayerState.WAITING_FOR_GAME);
             connector.save(requestExecutor.getPlayer());
-            gameNotStarted.setName(Side.PLAYER_ONE,waiting.getPlayer().getUsername());
+            gameNotStarted.setName(Side.PLAYER_ONE,waiting.getPlayer());
             return gameNotStarted;
         }else {
             if (waiting!=requestExecutor){
                 Game game = gameNotStarted;
-                gameNotStarted.setName(Side.PLAYER_TWO,requestExecutor.getPlayer().getUsername());
+                gameNotStarted.setName(Side.PLAYER_TWO,requestExecutor.getPlayer());
                 requestExecutor.getPlayer().setState(PlayerState.PLAYING_GAME);
                 waiting.getPlayer().setState(PlayerState.PLAYING_GAME);
                 connector.save(requestExecutor.getPlayer());
                 connector.save(waiting.getPlayer());
+                requestExecutor.setSide(Side.PLAYER_TWO);
                 game.setStatus(GameStatus.PLAYING);
                 gameNotStarted = null;
                 waiting = null;

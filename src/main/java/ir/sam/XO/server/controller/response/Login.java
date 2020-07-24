@@ -1,9 +1,7 @@
 package ir.sam.XO.server.controller.response;
 
 import lombok.Getter;
-import lombok.Setter;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class Login extends Response {
@@ -11,16 +9,14 @@ public class Login extends Response {
     private final boolean success;
     @Getter
     private final String message;
+
     public Login(boolean success, String message) {
         this.success = success;
-        this.message = message;
+        this.message = nonNull(message);
     }
 
     @Override
     public Map<String, Object> toMap() {
-        Map<String,Object> result = new HashMap<>(2);
-        result.put("success",success);
-        result.put("message",message);
-        return result;
+        return Map.of("success", success, "message", message);
     }
 }

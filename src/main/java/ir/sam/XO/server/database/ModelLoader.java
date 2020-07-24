@@ -22,7 +22,7 @@ public class ModelLoader {
 
     private void update() {
         synchronized (lock) {
-            players = connector.fetchAll(Player.class);
+            players = connector.executeHQL("from Player order by score desc",Player.class);
         }
     }
 

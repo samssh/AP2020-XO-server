@@ -63,4 +63,21 @@ public class Player implements SaveAble {
         this.draw = 0;
         this.state = PlayerState.HANGING_ON_MENU;
     }
+
+    public void win(){
+        win++;
+        games++;
+        score++;
+    }
+
+    public void draw(){
+        draw++;
+        games++;
+    }
+
+    public void lose(){
+        lose++;
+        games++;
+        score--;
+    }
 }

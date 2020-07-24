@@ -7,8 +7,7 @@ import ir.sam.XO.server.controller.transmitters.WrongApiException;
 import java.util.Map;
 
 public class ScoreBoardRequest extends Request {
-    public ScoreBoardRequest(Map<String, Object> map) throws WrongApiException {
-        super(map);
+    public ScoreBoardRequest(Map<String, Object> map){
     }
 
     @Override

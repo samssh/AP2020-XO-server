@@ -7,8 +7,8 @@ public class GoTo extends Response{
     private final String panelName;
 
     public GoTo(String message, String panelName) {
-        this.message = message;
-        this.panelName = panelName;
+        this.message = nonNull(message);
+        this.panelName = nonNull(panelName);
     }
 
     @Override

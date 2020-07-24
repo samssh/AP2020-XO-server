@@ -9,7 +9,7 @@ public interface RequestVisitor {
 
     Response startGame();
 
-    Response sendGameState();
+    Response sendGameState(int eventNumber);
 
     Response putPiece(int x,int y);
 
